@@ -8,6 +8,8 @@ private:
 	string name;
 
 public:
+	Person() {}
+
 	Person(int id, string name) {
 		this->id = id;
 		this->name = name;
@@ -19,6 +21,11 @@ public:
 	}
 	string getName() const {
 		return name;
+	}
+
+	//Setters :
+	void changeName(string name) {
+		this->name = name;
 	}
 };
 
