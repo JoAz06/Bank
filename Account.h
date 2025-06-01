@@ -11,21 +11,12 @@ private:
 	int accountNumber;
 	double balance;
 	Person owner;
-	static int numberOfAccounts;
-	
 
 public:
 	Account(int accountNumber, double balance, Person owner) {
 		this->accountNumber = accountNumber;
 		this->balance = balance;
 		this->owner = owner;
-
-		if (isnan(numberOfAccounts)) {
-			numberOfAccounts++;
-		}
-		else {
-			numberOfAccounts = 1;
-		}
 	}
 
 	//Getters :
@@ -57,10 +48,7 @@ public:
 			cout << "Withdraw failed\n";
 		}
 	}
-	static int getnumberOfAccounts() {
-		return numberOfAccounts;
-	}
-	void printAccountDetails() {
+	void print() {
 		cout << "Account Number: " << accountNumber << endl;
 		cout << "Balance: " << balance << endl;
 		cout << "Owner: " << owner.getId() << "  " <<owner.getName() << endl;

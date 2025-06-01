@@ -22,7 +22,7 @@ public:
 	string getName() const {
 		return name;
 	}
-
+	
 	//Setters :
 	void changeName(string name) {
 		this->name = name;
