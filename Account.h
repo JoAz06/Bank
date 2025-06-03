@@ -14,8 +14,8 @@ private:
 
 public:
 	Account(int accountNumber, double balance, Person owner) {
-		this->accountNumber = accountNumber;
-		this->balance = balance;
+		this->accountNumber = abs(accountNumber);
+		this->balance = abs(balance);
 		this->owner = owner;
 	}
 

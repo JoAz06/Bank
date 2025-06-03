@@ -71,6 +71,14 @@ static void createDB() {
     sqlite3_close(DB);
 }
 
+static void printOutResult() {
+    for (vector<string> x : queryResults) {
+        for (string y : x) {
+            cout << y << endl;
+        }
+    }
+}
+
 static void executeSQL(string sql) {
     sqlite3* DB;
     sqlite3_open("Bank.db", &DB);
@@ -78,7 +86,7 @@ static void executeSQL(string sql) {
     sqlite3_close(DB);
 }
 
-static int callback(void* notUsed, int count, char** colName, char** colData) {
+static int callback(void* notUsed, int count, char** colData, char** colName) {
     vector<string> temp(count);
     for (int i = 0; i < count; i++) {
         temp[i] = colData[i];
@@ -93,6 +101,7 @@ static void selectSQL(string sql) {
     sqlite3* DB;
     sqlite3_open("Bank.db", &DB);
     sqlite3_exec(DB, sql.c_str() , callback , nullptr , nullptr);
+    
 }
 //------------------------------------------------------//
 
@@ -103,7 +112,7 @@ int main(){
 
     //Commands :
     vector<string> exit = {"exit","exit - Close the program\n"};
-    vector<string> add = {"add","add account [account number] [account balance] [account owner id] - Add a new account with already existing owner\nadd account [account number] [account balance] [owner id] [owner name] - Add a new account with a new owner\nadd person [person id] [person name] - Add a new person\n"};
+    vector<string> add = {"add","add account [account number] [account balance] [account owner id] - Add a new account with already existing owner\nadd account [account number] [account balance] [owner id] [owner name] - Add a new account with a new owner\nadd person [person id] \"[person name]\" - Add a new person\n"};
     vector<string> help = { "help","help - Show this message\n"};
 	vector<string> info = { "info","info account [account number] - Show the info of the account\ninfo person [person id] - Show the info of the person\ninfo - Show the info of the whole bank\n" };
 	vector<vector<string>> commandList = {exit, add, help, info};
@@ -118,16 +127,29 @@ int main(){
         executeSQL(sql[i]);
     }
     
+    
     bool running = true;
 	cout << "Welcome to bank of America" << endl;
     do {
+        //delete me
+            selectSQL("select * from Person;");
+            printOutResult();
+            selectSQL("select * from Account;");
+            printOutResult();
+        //to here
+
 		cout << "Enter a command: ";
         getline(cin, userInput);
         command = Split(userInput);
+        vector<string> commandNames = Split(userInput,'"');
         bool valid = true;
 
+        if (command.size() == 0) {
+            valid = false;
+        }
+
         //Info
-        if (Equals(command[0], info[0])) {
+        if (valid && Equals(command[0], info[0])) {
             if (command.size() == 1) {
 				
             }
@@ -148,32 +170,54 @@ int main(){
         }
 
         //Add
-        else if(Equals(command[0], add[0]) && command.size() >=2) {
+        else if(valid && Equals(command[0], add[0]) && command.size() >=2) {
             if(Equals(command[1],"account")){
-                if (true /*check before if account already exists*/) {
-                    if (command.size() == 5 && isNumber(command[2])) {
-
+                selectSQL("select * from Account where accountNumber = " + command[2] + ";");
+                if (queryResults.size() == 0 && isNumber(command[4])) {
+                    if (command.size() == 5) {
+                        selectSQL("select * from Person where id = " + command[4] + ";");
+                        if (queryResults.size() == 1) {
+                            Person* temperaryPerson = new Person(stoi(queryResults[0][0]), queryResults[0][1]);
+                            Account* temperaryAccount = new Account(stoi(command[2]), stod(command[3]), *temperaryPerson);
+                            executeSQL("INSERT INTO Account VALUES (" + to_string(temperaryAccount->getAccountNumber()) + ", " + to_string(temperaryAccount->getBalance()) + " , "+ to_string(temperaryPerson->getId()) +"); ");
+                            delete temperaryAccount;
+                            delete temperaryPerson;
+                        }
+                        else {
+                            cout << "Person with ID : " << command[4] << " doesnt exist.\n";
+                        }
                     }
-                    else if (command.size() == 6  && isNumber(command[4])) {
-
+                    else if (command.size() >= 6 && commandNames.size() == 2) {
+                        selectSQL("select * from Person where id = " + command[4] + ";");
+                        if (queryResults.size() == 0) {
+                            Person* temperaryPerson = new Person(stoi(command[4]), commandNames[1]);
+                            executeSQL("INSERT INTO Person VALUES (" + to_string(temperaryPerson->getId()) + ", '" + temperaryPerson->getName() + "');");
+                            Account* temperaryAccount = new Account(stoi(command[2]), stod(command[3]), *temperaryPerson);
+                            executeSQL("INSERT INTO Account VALUES (" + to_string(temperaryAccount->getAccountNumber()) + ", " + to_string(temperaryAccount->getBalance()) + " , " + to_string(temperaryPerson->getId()) + "); ");
+                            delete temperaryAccount;
+                            delete temperaryPerson;
+                        }
+                        else {
+                            cout << "Person with the same ID already exist.\n";
+                        }
                     }
                     else {
                         valid = false;
                     }
                 }
                 else {
-                    valid = false;
+                    cout << "Account with number : " << command[2] << " already exists or invalid data.";
                 }
             }
-            else if (Equals(command[1] , "person") && isNumber(command[3])) {
-                if (true /*checkk if person already exists*/) {
-                    /*
-                        if not add to database by creating new Person
-                        then add with sql then delete person
-                        */
+            else if (Equals(command[1] , "person") && isNumber(command[2]) && commandNames.size()==2) {
+                selectSQL("select * from Person where id = " + command[2] + ";");
+                if (queryResults.size() == 0) {
+                    Person* temperaryPerson = new Person( stoi(command[2]), commandNames[1]);
+                    executeSQL("INSERT INTO Person VALUES (" + to_string(temperaryPerson->getId()) + ", '" + temperaryPerson->getName() + "');");
+                    delete temperaryPerson;
                 }
                 else {
-                    valid = false;
+                    cout << "Person with the same ID already exist.\n";
                 }
             }
             else {
@@ -182,7 +226,7 @@ int main(){
 		}
 
         //Help
-        else if (Equals(command[0], help[0])) {
+        else if (valid && Equals(command[0], help[0])) {
             if (command.size() <= 2) {
                 if (command.size() == 1) {
                     for (vector<string> cmd : commandList) {
@@ -206,9 +250,9 @@ int main(){
         }
 
         //Exit
-        else if (Equals(command[0],exit[0])) {
+        else if (valid && Equals(command[0],exit[0])) {
             cout << "Closing the program...\n";
-            running = false;
+            running = false;    
         }
 
         //Invalid Input

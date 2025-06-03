@@ -1,17 +1,17 @@
 #pragma once
 #include <iostream>
 #include <string>
+#include <cmath>
 using namespace std;
 class Person{
 private:
-	int id;
-	string name;
+	int id = 0;
+	string name = "";
 
 public:
-	Person() {}
-
+	Person() : id(0), name("") {}
 	Person(int id, string name) {
-		this->id = id;
+		this->id = abs(id);
 		this->name = name;
 	}
 
