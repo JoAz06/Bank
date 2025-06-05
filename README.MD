@@ -15,7 +15,7 @@ create table if not exist Account(
 	accountNumber int primary key,
 	balance double,
 	owner int not null,
-	foreign key (owner) references Person(id)
+	foreign key (owner) references Person(id) on delete cascade
 );
 create table if not exist Person(
 	id int primary key,
@@ -24,9 +24,9 @@ create table if not exist Person(
 create table if not exist Owning(
 	owner int not null,
 	accountNumber int not null,
-	foreighn key (owner) references Person(id),
-	foreign key (accountNumber) references Account(accountNumber),
-	delete on cascade
+	foreighn key (owner) references Person(id) on delete cascade,
+	foreign key (accountNumber) references Account(accountNumber) on delete cascade
+	
 );
 
 Select queries :
