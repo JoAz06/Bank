@@ -30,4 +30,4 @@ create table if not exist Owning(
 );
 
 Select queries :
-select from 
+are implemented in the code. 
