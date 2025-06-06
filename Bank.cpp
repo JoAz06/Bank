@@ -105,7 +105,26 @@ static void selectSQL(string sql) {
     sqlite3_exec(DB, sql.c_str() , callback , nullptr , nullptr);
     
 }
+
+static void printAllAccounts() {
+    selectSQL("select * from account;");
+    for (int i = 0; i < queryResults.size(); i++) {
+        cout << "Number : " << queryResults[i][0] << endl;
+        cout << "Balance : " << queryResults[i][1] << "$" << endl;
+        cout << "Owner ID : " << queryResults[i][2] << endl << endl;
+    }
+}
+
+static void printAllPeople() {
+    selectSQL("select * from person;");
+    for (int i = 0; i < queryResults.size(); i++) {
+        cout << "ID : " << queryResults[i][0] << endl;
+        cout << "Name : " << queryResults[i][1] << endl << endl;
+    }
+}
 //------------------------------------------------------//
+
+
 
 int main(){
     string userInput;
@@ -118,7 +137,9 @@ int main(){
     vector<string> help = { "help","help - Show this message\n"};
 	vector<string> show = { "show","show account [account number] - Show the info of the account\nshow person [person id] - Show the info of the person\nshow - Show the info of the whole bank\n" };
     vector<string> remove = { "remove","remove account [account number] - Delete the account with that number\bremove person [person id] - Delete the person wwith that ID\n" };
-	vector<vector<string>> commandList = {exit, add, help, show, remove};
+    vector<string> withdraw = { "withdraw","withdraw [account number] [ammount] - Withdraws from the account the specific ammount\n"};
+    vector<string> deposit = { "deposit","deposit [account number] [ammount] - Deposits from the account the specific ammount\n" };
+    vector<vector<string>> commandList = {exit, add, help, show, remove, withdraw, deposit};
 
     //Preparations for the database
     vector<string> sql = {"create table if not exists Person(id int primary key,name varchar(255) not null);",
@@ -128,7 +149,6 @@ int main(){
     for (int i = 0; i < sql.size(); i++) {
         executeSQL(sql[i]);
     }
-    
     
     bool running = true;
 	cout << "Welcome to bank of America" << endl;
@@ -143,10 +163,50 @@ int main(){
             valid = false;
         }
 
-        //show
-        if (valid && Equals(command[0], show[0])) {
-            if (command.size() == 1) {
-				
+        //Deposit
+        else if (valid && Equals(command[0], deposit[0])) {
+            selectSQL("select * from Account where accountNumber = " + command[1] + ";");
+            if (queryResults.size() != 0) {
+                Account* temperaryAccount = new Account(stoi(queryResults[0][0]), stod(queryResults[0][1]));
+                temperaryAccount->deposit(stod(command[2]));
+                executeSQL("update account set balance = " + to_string(temperaryAccount->getBalance()) + " where accountnumber = "+ command[1] + "; ");
+                delete temperaryAccount;
+            }
+            else {
+                cout << "Account doesnt exist.\n";
+            }
+        }
+
+        //Withdraw
+        else if (valid && Equals(command[0], withdraw[0])) {
+            selectSQL("select * from Account where accountNumber = " + command[1] + ";");
+            if (queryResults.size() != 0) {
+                Account* temperaryAccount = new Account(stoi(queryResults[0][0]), stod(queryResults[0][1]));
+                temperaryAccount->withdraw(stod(command[2]));
+                executeSQL("update account set balance = " + to_string(temperaryAccount->getBalance()) + " where accountnumber = " + command[1] + "; ");
+                delete temperaryAccount;
+            }
+            else {
+                cout << "Account doesnt exist.\n";
+            }
+        }
+
+        //Show
+         else if (valid && Equals(command[0], show[0])) {
+            if (command.size() == 2) {
+                if (Equals(command[1], "--all")) {
+                    printAllPeople();
+                    printAllAccounts();
+                }
+                else if (Equals(command[1], "account")) {
+                    printAllAccounts();
+                }
+                else if (Equals(command[1], "person")) {
+                    printAllPeople();
+                }
+                else {
+                    valid = false;
+                }
             }
             else if(command.size() >= 3 && isNumber(command[2])) {
                 if (Equals(command[1],"account")) {
@@ -166,9 +226,9 @@ int main(){
                     if (queryResults.size() != 0) {
                         cout << "Person with ID : " << queryResults[0][0] << endl;
                         cout << "With name : " << queryResults[0][1] << endl;
-                        selectSQL("select count(*) from account having owner = " + command[2] + ";");
+                        selectSQL("select count(*) from account where owner = " + command[2] + ";");
                         cout << "Owns " << queryResults[0][0] << " accounts with a total balance of ";
-                        selectSQL("select sum(balance) from account having owner = " + command[2] + ";");
+                        selectSQL("select sum(balance) from account where owner = " + command[2] + ";");
                         cout << queryResults[0][0] << "$\n";
                     }
                     else {
@@ -288,7 +348,6 @@ int main(){
                     }
                 }
             }
-            
         }
 
         //Exit

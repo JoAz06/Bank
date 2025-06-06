@@ -13,6 +13,12 @@ private:
 	Person owner;
 
 public:
+	//Temperary Account
+	Account(int accountNumber, double balance) {
+		this->accountNumber = abs(accountNumber);
+		this->balance = abs(balance);
+	}
+
 	Account(int accountNumber, double balance, Person owner) {
 		this->accountNumber = abs(accountNumber);
 		this->balance = abs(balance);
@@ -43,6 +49,7 @@ public:
 	void withdraw(double amount) {
 		if (amount > 0 && amount <= balance) {
 			balance -= amount;
+			cout << "Withdrew " << amount << endl;
 		}
 		else {
 			cout << "Withdraw failed\n";
